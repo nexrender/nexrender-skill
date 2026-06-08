@@ -1,0 +1,40 @@
+{
+  "skill_name": "nexrender",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to submit a render job to Nexrender. My template ID is 01JTGM9GCR71JV7EJYDF45QAFD and the composition is called 'main'. I want to replace a text layer called 'headline' with 'Summer Sale 2026', swap the image layer 'hero' with a URL (https://cdn.example.com/hero.jpg), hide a layer called 'CtaButton', and output the result as a ProRes 4444 video at full quality. Also push the output to my Cloudflare R2 bucket - my account ID is abc123, bucket name is 'video-outputs'. Credentials are already stored as secrets R2_KEY and R2_SECRET. Show me the complete curl request.",
+      "expected_output": "A complete, correct curl POST /jobs request with: text asset for headline, image asset for hero, function asset (nx-layer-state-set) to hide CtaButton, settings with codec video_prores_4444 and quality full, upload block with correct R2 endpoint using ${secrets.R2_KEY} and ${secrets.R2_SECRET} syntax."
+    },
+    {
+      "id": 2,
+      "prompt": "We need to render 500 personalized thank-you videos for our event attendees. We have a template (ID: 01K2TMPL) with a composition called 'thankyou' that has text layers 'attendee_name' and 'event_date'. We have a CSV with names and dates. Walk me through the best approach using the Nexrender API - should we use the batch endpoint? How do we structure the request? What does the response look like, and how do we know when all 500 are done? Also what happens if a few fail?",
+      "expected_output": "Explains batch API (POST /batches), shows how to structure the jobs array with text assets for each job, explains the partial success behavior with errors array, shows how to poll GET /batches/{id} with stats fields, mentions webhooks as an alternative to polling for 500 jobs."
+    },
+    {
+      "id": 3,
+      "prompt": "My render job keeps failing. When I call GET /jobs/01JTRDF7HCR8QAHYW8GPCP4S9Y I see status 'error'. How do I find out what went wrong? Also I'm submitting jobs and getting a 'missingFonts' field in the response - what does that mean and how do I fix it? And separately, I want to cancel all jobs in a batch I started - is that possible?",
+      "expected_output": "Explains checking stats.error field for the error message string. Explains missingFonts as a visual correctness warning that can include uploaded file names or AE/internal font-family labels such as Soleil (Regular), previews may still finish with fallback fonts, and the fix is to upload/repair the .ttf files via POST /fonts before trusting output. Explains POST /batches/{id}/cancel for batch cancellation, plus the cascade behavior."
+    },
+    {
+      "id": 4,
+      "prompt": "Use Nexrender Cloud to list our team templates, but I do not have an API key configured locally yet. What should I do?",
+      "expected_output": "Explains that the agent should first check NEXRENDER_API_KEY in the process environment and then project .env, without printing token values. If missing, directs the user to generate a team API token from https://app.nexrender.com/team/settings or the Nexrender dashboard, store it in project .env as NEXRENDER_API_KEY=..., treat .env as secret material, and check that .env is untracked or ignored before writing it."
+    },
+    {
+      "id": 5,
+      "prompt": "Upload /tmp/TestTemplate.aep as a Nexrender Cloud template. The POST /templates response may return either { template, uploadInfo } or the older { id, uploadUrl } shape. Show the commands and include the presigned URL upload step.",
+      "expected_output": "Uses curl (curl.exe on Windows PowerShell) rather than Invoke-RestMethod, Invoke-WebRequest, or a native HTTP client. Creates the template with POST /templates, handles both uploadInfo.url and legacy uploadUrl response shapes, uploads with a minimal curl PUT using Content-Type: application/octet-stream and --data-binary, sends no Nexrender Authorization header to the presigned URL, does not blindly copy uploadInfo.fields or unsigned x-amz-* metadata headers such as x-amz-meta-custom, and polls GET /templates/{id} until uploaded or error."
+    },
+    {
+      "id": 6,
+      "prompt": "I want to list templates, upload a font, upload a template, create a preview render, and poll the job from both Windows PowerShell and Bash. What should the Nexrender skill steer me toward?",
+      "expected_output": "Prefers the bundled helper scripts over rebuilding curl logic: PowerShell scripts/list-templates.ps1, upload-font.ps1, upload-template.ps1, create-preview-job.ps1, poll-job.ps1 and Bash scripts/list-templates.sh, upload-font.sh, upload-template.sh, create-preview-job.sh, poll-job.sh. Notes that JSON bodies must be written to temp files and sent with --data-binary @file, not inline --data-raw. Notes that create-preview-job uses preview: true and omits settings."
+    },
+    {
+      "id": 7,
+      "prompt": "I fetched a template and see layers with layerName and composition. Can I tell which ones are text layers from introspection?",
+      "expected_output": "Explains that template introspection returns layerName and composition association, but not actual AE layer type. Text-layer discovery is name-based or convention-based unless the official Nexrender API adds richer layer type metadata."
+    }
+  ]
+}
