@@ -17,6 +17,8 @@ job payloads, debug render failures, design workflows, and write API integration
 ## Quick constants (always useful)
 
 - **Base URL**: `https://api.nexrender.com/api/v2`
+- **V3 template read base**: `https://api.nexrender.com/api/v3` (`/v3/templates...` uses the
+  `https://api.nexrender.com/api` server root, not `/api/v2`)
 - **Auth header**: `Authorization: Bearer $NEXRENDER_API_KEY`
 - **Standard token variable**: `NEXRENDER_API_KEY`
 - **Secret reference syntax**: `${secrets.NAME}` (plural `secrets`, single braces - never `${secret.NAME}`)
@@ -96,6 +98,7 @@ Only `queued` and `pending` can be cancelled.
 | Status | Meaning |
 |--------|---------|
 | `awaiting_upload` | Created but file not yet uploaded |
+| `downloading` | Nexrender is fetching the template from `src` |
 | `processing` | File received, being introspected |
 | `uploaded` | Ready to use in jobs |
 | `error` | Processing failed |
@@ -109,7 +112,8 @@ Load these when the user needs more than the basics above:
   Read when: user is getting started, asking how to set up a workflow, asking about the full pipeline,
   or asking about functions and when to use each one.
 
-- **`references/api-reference.md`** - Full endpoint list, request/response shapes, query params.
+- **`references/api-reference.md`** - Full endpoint list, request/response shapes, query params,
+  including v3 template listing/metadata/composition/layer endpoints.
   Read when: listing jobs, filtering, template management endpoints, fonts/secrets endpoints.
 
 - **`references/job-payload.md`** - Complete job payload schema with every asset type fully documented.
@@ -134,21 +138,22 @@ These are the most common sources of bugs - always apply them:
    `Soleil (Regular)`). Previews may still finish with fallback fonts. Upload/repair the fonts and
    resubmit before trusting visual output.
 
-4. **Two-step template upload** - `POST /templates` creates a record and returns either legacy
-   `uploadUrl` or current `uploadInfo.url` plus `template`. Then `PUT` the file directly to that URL
+4. **Two-step template upload** - `POST /templates` creates a record and returns `uploadInfo.url`
+   alongside template metadata (or legacy `uploadUrl`). Then `PUT` the file directly to that URL
    without Nexrender auth headers. Use a minimal binary PUT with `Content-Type: application/octet-stream`.
    Do not blindly copy `uploadInfo.fields` into headers; extra unsigned `x-amz-*` metadata can fail with
    `MalformedSecurityHeader`. Upload URLs are temporary, usually about 1 hour; call
    `PUT /templates/{id}/upload` if one expires. The template is usable only after polling
-   `GET /templates/{id}` until status becomes `uploaded`.
+   `GET /v3/templates/{id}` or legacy `GET /templates/{id}` until status becomes `uploaded`.
 
-5. **`template.src`** bypasses Nexrender storage entirely (clean room). When used, `template.id` is still
-   required as a reference identifier but template introspection (compositions/layers) is not available.
+5. **Job payload `template.src`** bypasses Nexrender storage entirely (clean room). When used,
+   `template.id` is still required as a reference identifier but template introspection
+   (compositions/layers) is not available.
 
 6. **Layer names must match exactly** - Nexrender requires exact `layerName` matches against After Effects
-   layer names. Case-sensitive. Template introspection returns `layerName` and `composition`, but not
-   the actual AE layer type; "text layer" discovery is name-based unless the official API adds richer
-   typing. Typos cause silent render errors.
+   layer names. Case-sensitive. V3 template layer introspection returns `name` plus metadata such as
+   `layer_type`, `source_type`, timing, and bounds; use `name` as the job payload `layerName`. Legacy v2
+   template details only return composition/layer name arrays. Typos cause silent render errors.
 
 7. **Webhook endpoints must return `2xx`** - Nexrender retries up to 3 times with exponential backoff.
    Make handlers idempotent and respond immediately.

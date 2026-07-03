@@ -53,9 +53,24 @@ function Get-NxBaseUrl {
   return 'https://api.nexrender.com/api/v2'
 }
 
+function Get-NxApiRootUrl {
+  $base = Get-NxBaseUrl
+  if ($base.EndsWith('/v2')) {
+    return $base.Substring(0, $base.Length - 3)
+  }
+  return $base
+}
+
 function Join-NxUrl {
   param([Parameter(Mandatory = $true)][string]$Path)
-  $base = Get-NxBaseUrl
+  if ($Path -match '^https?://') {
+    return $Path
+  }
+  if ($Path.StartsWith('/v3/')) {
+    $base = Get-NxApiRootUrl
+  } else {
+    $base = Get-NxBaseUrl
+  }
   if ($Path.StartsWith('/')) {
     return "$base$Path"
   }

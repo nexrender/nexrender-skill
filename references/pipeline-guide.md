@@ -82,10 +82,8 @@ Where `template-create.json` contains `{ "displayName": "Product Promo", "type":
 Response:
 ```json
 {
-  "template": {
-    "id": "01JTGM9GCR71JV7EJYDF45QAFD",
-    "status": "awaiting_upload"
-  },
+  "id": "01JTGM9GCR71JV7EJYDF45QAFD",
+  "status": "awaiting_upload",
   "uploadInfo": {
     "url": "https://nx1-assets-eu.cloudflarestorage.com/...?X-Amz-Expires=3600&...",
     "method": "PUT",
@@ -96,7 +94,8 @@ Response:
 }
 ```
 
-Older responses may return `id` and `uploadUrl` at the top level instead. Support both shapes.
+Some deployments may wrap the metadata as `{ "template": { ... }, "uploadInfo": { ... } }`; older
+responses may return `id` and `uploadUrl` at the top level instead. Support all known shapes.
 
 Supported types: `zip` (`.aep` + assets), `aep`, `mogrt`. Prefer `zip` when the project has external
 assets or fonts that need to travel with the After Effects project.
@@ -114,38 +113,47 @@ to the presigned URL. Do not blindly copy `uploadInfo.fields` into headers; extr
 metadata headers can fail with `MalformedSecurityHeader` (observed with `x-amz-meta-custom`). Use the
 minimal binary PUT above unless the returned URL explicitly signs and requires an extra header.
 
-The template moves `awaiting_upload` -> `processing` -> `uploaded` (takes a few seconds). Poll
-`GET /templates/{id}` until status is `uploaded` or `error`. The presigned URL expires after 1 hour - if
-it expires, call `PUT /templates/{id}/upload` for a fresh one.
+The template moves `awaiting_upload` -> `processing` -> `uploaded` (or `downloading` -> `processing`
+-> `uploaded` when `src` is used). Poll `GET /v3/templates/{id}` or legacy `GET /templates/{id}` until
+status is `uploaded` or `error`. The presigned URL expires after 1 hour - if it expires, call
+`PUT /templates/{id}/upload` for a fresh one.
 
 Typical lifecycle: create the template, upload the file to `uploadInfo.url`, wait for `uploaded`, inspect
-`compositions` and `layers`, then submit jobs referencing the template ID.
+v3 `compositions` and `layers`, then submit jobs referencing the template ID.
 
 ---
 
 ## Step 3 — Introspect the template
 
-Once status is `uploaded`, fetch the template to discover what compositions and layers are available. This is how you know exactly what to reference in your job payload.
+Once status is `uploaded`, use the v3 structure endpoints to discover what compositions and layers are
+available. This is how you know exactly what to reference in your job payload.
 
 ```bash
-curl https://api.nexrender.com/api/v2/templates/01JTGM9GCR71JV7EJYDF45QAFD \
+curl https://api.nexrender.com/api/v3/templates/01JTGM9GCR71JV7EJYDF45QAFD/compositions \
+  -H "Authorization: Bearer YOUR_API_KEY"
+
+curl https://api.nexrender.com/api/v3/templates/01JTGM9GCR71JV7EJYDF45QAFD/layers \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Response:
+Composition response:
 ```json
-{
-  "id": "01JTGM9GCR71JV7EJYDF45QAFD",
-  "status": "uploaded",
-  "compositions": ["main", "intro", "outro"],
-  "layers": ["title", "subtitle", "logo", "background", "cta"]
-}
+[
+  { "aeid": "12", "name": "main", "width": 1920, "height": 1080, "duration": 8.5, "frame_rate": 29.97, "data": {} }
+]
 ```
 
-Use `compositions` to set `template.composition` in jobs. Use `layers` to validate your `layerName`
-values before submitting - layer names must match exactly (case-sensitive). Introspection returns
-`layerName` and `composition`, but not the actual AE layer type; identifying "text layers" is name-based
-unless Nexrender adds richer type metadata.
+Layer response:
+```json
+[
+  { "composition_id": 12, "aeid": 5, "name": "title", "layer_type": "TextLayer", "source_type": null, "data": {} }
+]
+```
+
+Use composition `name` to set `template.composition` in jobs. Use layer `name` as the job payload
+`layerName` and validate it before submitting - layer names must match exactly (case-sensitive).
+V3 layers can include `layer_type`, `source_type`, timing, and bounds metadata. Legacy
+`GET /templates/{id}` still returns simple `compositions` and `layers` name arrays.
 
 ---
 

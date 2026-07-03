@@ -75,10 +75,24 @@ nx_base_url() {
   printf '%s\n' "${base%/}"
 }
 
+nx_api_root_url() {
+  local base
+  base="$(nx_base_url)"
+  printf '%s\n' "${base%/v2}"
+}
+
 nx_url() {
   local path="$1"
   local base
-  base="$(nx_base_url)"
+  if [[ "$path" == http://* || "$path" == https://* ]]; then
+    printf '%s\n' "$path"
+    return
+  fi
+  if [[ "$path" == /v3/* ]]; then
+    base="$(nx_api_root_url)"
+  else
+    base="$(nx_base_url)"
+  fi
   if [[ "$path" == /* ]]; then
     printf '%s%s\n' "$base" "$path"
   else

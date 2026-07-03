@@ -11,7 +11,8 @@ curl -X POST https://api.nexrender.com/api/v2/templates \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   --data-binary "@template-create.json"
-# returns current { "template": { "id": "..." }, "uploadInfo": { "url": "..." } }
+# returns { "id": "...", "uploadInfo": { "url": "..." } }
+# or nested { "template": { "id": "..." }, "uploadInfo": { "url": "..." } }
 # or legacy { "id": "...", "uploadUrl": "..." }
 
 # Step 2: PUT the file to the presigned URL
@@ -22,16 +23,22 @@ curl -X PUT "<uploadInfo.url-or-uploadUrl>" \
 
 The presigned PUT gets no Nexrender auth header. Do not blindly copy `uploadInfo.fields` into headers;
 extra unsigned `x-amz-*` metadata can fail with `MalformedSecurityHeader`. The template moves
-`awaiting_upload` -> `processing` -> `uploaded`; poll `GET /templates/{id}` until `uploaded` or `error`.
+`awaiting_upload` -> `processing` -> `uploaded` (or `downloading` -> `processing` -> `uploaded` when
+`src` is used); poll `GET /v3/templates/{id}` or legacy `GET /templates/{id}` until `uploaded` or
+`error`.
 
 ### Inspecting a template before rendering
 ```bash
-curl https://api.nexrender.com/api/v2/templates/01JTGM...
-# → { "compositions": ["main", "intro"], "layers": ["title", "subtitle", "logo"] }
+curl https://api.nexrender.com/api/v3/templates/01JTGM.../compositions
+# -> [{ "aeid": "12", "name": "main", "width": 1920, "height": 1080, ... }]
+
+curl https://api.nexrender.com/api/v3/templates/01JTGM.../layers
+# -> [{ "composition_id": 12, "name": "title", "layer_type": "TextLayer", ... }]
 ```
-Use the `compositions` and `layers` arrays to validate your job payload layer names before submitting.
-Template introspection returns `layerName` and `composition`, but not actual AE layer type. Treat
-"text layer" discovery as name-based unless Nexrender adds richer type metadata.
+Use composition `name` and layer `name` to validate your job payload before submitting. In jobs, the
+layer field is still `layerName`; set it to the exact v3 layer `name` value. V3 layer introspection can
+include `layer_type`, `source_type`, timing, and bounds metadata. Legacy `GET /templates/{id}` returns
+simple `compositions` and `layers` name arrays.
 
 ---
 

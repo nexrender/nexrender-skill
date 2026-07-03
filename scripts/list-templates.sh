@@ -6,11 +6,28 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$script_dir/_nx-cloud.sh"
 
 raw=false
-if [[ "${1:-}" == "--raw" || "${1:-}" == "-Raw" ]]; then
-  raw=true
+legacy=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --raw|-Raw)
+      raw=true
+      ;;
+    --legacy|-Legacy)
+      legacy=true
+      ;;
+    *)
+      nx_die "Usage: list-templates.sh [--raw] [--legacy]"
+      ;;
+  esac
+  shift
+done
+
+path="/v3/templates"
+if [[ "$legacy" == true ]]; then
+  path="/templates"
 fi
 
-response="$(nx_api GET /templates)"
+response="$(nx_api GET "$path")"
 if [[ "$raw" == true ]]; then
   printf '%s\n' "$response"
 else

@@ -1,12 +1,18 @@
 [CmdletBinding()]
 param(
-  [switch]$Raw
+  [switch]$Raw,
+  [switch]$Legacy
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $scriptDir '_nx-cloud.ps1')
 
-$response = Invoke-NxApi -Method GET -Path '/templates' -Raw
+$path = '/v3/templates'
+if ($Legacy) {
+  $path = '/templates'
+}
+
+$response = Invoke-NxApi -Method GET -Path $path -Raw
 if ($Raw) {
   $response
   exit 0

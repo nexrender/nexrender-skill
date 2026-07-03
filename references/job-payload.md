@@ -30,9 +30,10 @@ Every asset object has:
 ### `type: "text"` - simple text shorthand
 Replaces the Source Text on a text layer. Shorthand for data + Source Text.
 
-Template introspection does not currently identify actual AE layer type; it returns `layerName` and
-`composition`. Confirm text targets by template naming/convention unless official docs expose richer
-typing.
+Use `GET /v3/templates/{id}/layers` when you need layer metadata before targeting a text layer. The v3
+layer response uses `name` for the After Effects layer name and can include `layer_type`; in the job
+payload, set `layerName` to that exact `name` value. Legacy `GET /templates/{id}` only returns simple
+composition/layer name arrays.
 
 ```json
 {

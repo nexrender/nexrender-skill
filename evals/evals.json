@@ -24,17 +24,17 @@
     {
       "id": 5,
       "prompt": "Upload /tmp/TestTemplate.aep as a Nexrender Cloud template. The POST /templates response may return either { template, uploadInfo } or the older { id, uploadUrl } shape. Show the commands and include the presigned URL upload step.",
-      "expected_output": "Uses curl (curl.exe on Windows PowerShell) rather than Invoke-RestMethod, Invoke-WebRequest, or a native HTTP client. Creates the template with POST /templates, handles both uploadInfo.url and legacy uploadUrl response shapes, uploads with a minimal curl PUT using Content-Type: application/octet-stream and --data-binary, sends no Nexrender Authorization header to the presigned URL, does not blindly copy uploadInfo.fields or unsigned x-amz-* metadata headers such as x-amz-meta-custom, and polls GET /templates/{id} until uploaded or error."
+      "expected_output": "Uses curl (curl.exe on Windows PowerShell) rather than Invoke-RestMethod, Invoke-WebRequest, or a native HTTP client. Creates the template with POST /templates, handles top-level or nested uploadInfo.url and legacy uploadUrl response shapes, uploads with a minimal curl PUT using Content-Type: application/octet-stream and --data-binary, sends no Nexrender Authorization header to the presigned URL, does not blindly copy uploadInfo.fields or unsigned x-amz-* metadata headers such as x-amz-meta-custom, and polls GET /v3/templates/{id} or legacy GET /templates/{id} until uploaded or error."
     },
     {
       "id": 6,
       "prompt": "I want to list templates, upload a font, upload a template, create a preview render, and poll the job from both Windows PowerShell and Bash. What should the Nexrender skill steer me toward?",
-      "expected_output": "Prefers the bundled helper scripts over rebuilding curl logic: PowerShell scripts/list-templates.ps1, upload-font.ps1, upload-template.ps1, create-preview-job.ps1, poll-job.ps1 and Bash scripts/list-templates.sh, upload-font.sh, upload-template.sh, create-preview-job.sh, poll-job.sh. Notes that JSON bodies must be written to temp files and sent with --data-binary @file, not inline --data-raw. Notes that create-preview-job uses preview: true and omits settings."
+      "expected_output": "Prefers the bundled helper scripts over rebuilding curl logic: PowerShell scripts/list-templates.ps1, upload-font.ps1, upload-template.ps1, create-preview-job.ps1, poll-job.ps1 and Bash scripts/list-templates.sh, upload-font.sh, upload-template.sh, create-preview-job.sh, poll-job.sh. Notes that list-templates uses the v3 template metadata API by default, with a legacy option only for the deprecated v2 listing. Notes that JSON bodies must be written to temp files and sent with --data-binary @file, not inline --data-raw. Notes that create-preview-job uses preview: true and omits settings."
     },
     {
       "id": 7,
-      "prompt": "I fetched a template and see layers with layerName and composition. Can I tell which ones are text layers from introspection?",
-      "expected_output": "Explains that template introspection returns layerName and composition association, but not actual AE layer type. Text-layer discovery is name-based or convention-based unless the official Nexrender API adds richer layer type metadata."
+      "prompt": "I need to list our templates and inspect the compositions and layers for one template. Which Nexrender endpoints should I use now, and how do layer names map into job payloads?",
+      "expected_output": "Uses GET /v3/templates for lightweight template metadata instead of deprecated GET /templates. Uses GET /v3/templates/{id}/compositions and GET /v3/templates/{id}/layers for parsed structure with pagination parameters limit and offset. Explains that composition name maps to template.composition, v3 layer name maps to job asset/function layerName, and v3 layers can include layer_type/source_type/timing/bounds metadata."
     }
   ]
 }

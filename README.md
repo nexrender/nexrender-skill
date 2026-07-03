@@ -269,7 +269,8 @@ Use the nexrender skill to create a preview render workflow.
 Good signs that the skill loaded:
 
 - The agent mentions `NEXRENDER_API_KEY` for authentication.
-- It uses `https://api.nexrender.com/api/v2` as the Cloud API base URL.
+- It uses `https://api.nexrender.com/api/v2` for v2 Cloud endpoints and
+  `https://api.nexrender.com/api/v3/templates...` for v3 template reads.
 - It prefers `curl` or the bundled helper scripts for Cloud calls.
 - It warns that `preview: true` and `settings` are mutually exclusive.
 - It treats `missingFonts` as a visual correctness warning.
@@ -288,7 +289,7 @@ The scripts read `NEXRENDER_API_KEY` from the environment first, then from a
 project `.env` file. They use `curl` under the hood. On Windows PowerShell, the
 helpers call `curl.exe` to avoid PowerShell's `curl` alias.
 
-List templates:
+List templates with the v3 metadata endpoint:
 
 ```bash
 scripts/list-templates.sh
@@ -297,6 +298,8 @@ scripts/list-templates.sh
 ```powershell
 .\scripts\list-templates.ps1
 ```
+
+Use `--legacy` or `-Legacy` only when you explicitly need the deprecated v2 template listing.
 
 Upload a `.ttf` font:
 
@@ -348,6 +351,7 @@ submitting Cloud requests.
   scripts, functions, and nested jobs.
 - Upload templates through the two-step create and presigned PUT flow.
 - Poll template status until `uploaded` before rendering.
+- List templates with the v3 metadata API and inspect v3 composition/layer subresources.
 - Upload and reference fonts safely.
 - Use secrets with `${secrets.NAME}` instead of raw credentials.
 - Configure webhooks that return `2xx` and handle retries.
