@@ -6,7 +6,7 @@ This skill teaches Claude Code, Codex, OpenCode, Cursor, Gemini CLI, GitHub
 Copilot, and other agent tools how to work with Nexrender Cloud without
 guessing. It covers render jobs, job payloads, template upload and
 introspection, fonts, secrets, webhooks, batch jobs, nested jobs, join jobs,
-output settings, clean room workflows, and render debugging.
+output settings, job render logs, clean room workflows, and render debugging.
 
 The skill is built around the open `SKILL.md` agent skills format and includes
 extra reference material and helper scripts for real Nexrender Cloud workflows.

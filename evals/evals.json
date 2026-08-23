@@ -35,6 +35,11 @@
       "id": 7,
       "prompt": "I need to list our templates and inspect the compositions and layers for one template. Which Nexrender endpoints should I use now, and how do layer names map into job payloads?",
       "expected_output": "Uses GET /v3/templates for lightweight template metadata instead of deprecated GET /templates. Uses GET /v3/templates/{id}/compositions and GET /v3/templates/{id}/layers for parsed structure with pagination parameters limit and offset. Explains that composition name maps to template.composition, v3 layer name maps to job asset/function layerName, and v3 layers can include layer_type/source_type/timing/bounds metadata."
+    },
+    {
+      "id": 8,
+      "prompt": "My Nexrender job failed and stats.error is not detailed enough. Retrieve the full render log for job 01JTRDF7HCR8QAHYW8GPCP4S9Y from Bash or PowerShell. What response should I expect if no log is available?",
+      "expected_output": "Prefers scripts/get-job-logs.sh --job-id 01JTRDF7HCR8QAHYW8GPCP4S9Y or scripts/get-job-logs.ps1 -JobId 01JTRDF7HCR8QAHYW8GPCP4S9Y. Explains that GET /jobs/{id}/logs returns plain text rather than JSON, prints the retrieved log unchanged, and returns 404 when the job does not exist or has no stored render log."
     }
   ]
 }

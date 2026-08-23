@@ -289,6 +289,28 @@ Fetch current job state.
 
 ---
 
+### GET /jobs/{id}/logs
+Retrieve the stored After Effects render log for a job. Unlike other job endpoints, a successful
+response is UTF-8 plain text (`Content-Type: text/plain`), not JSON. Use the log to investigate render
+progress, After Effects output, warnings, and failures that are not fully explained by `stats.error`.
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $NEXRENDER_API_KEY" \
+  -H "Accept: text/plain" \
+  https://api.nexrender.com/api/v2/jobs/01JTRDF7HCR8QAHYW8GPCP4S9Y/logs
+```
+
+Prefer `scripts/get-job-logs.sh` or `scripts/get-job-logs.ps1` when the skill's bundled helpers are
+available. Both print the log unchanged, so callers can read it directly or redirect it to a file.
+
+The job ID must be a valid ULID. The endpoint returns `404` both when the job does not exist and when
+the job has no stored render log. It may return `400` for an invalid job ID, `401` for missing or
+invalid authentication, `403` when Nexrender is not licensed, and `500` if the stored log cannot be
+retrieved.
+
+---
+
 ### GET /jobs
 List jobs with optional filters.
 

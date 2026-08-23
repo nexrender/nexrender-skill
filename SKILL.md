@@ -3,10 +3,10 @@ name: nexrender
 description: >
   Expert knowledge of the Nexrender Cloud API for automated After Effects rendering. Use this skill
   whenever anyone asks about: submitting render jobs, building job payloads, asset injection, template
-  management, batch rendering, nested/join jobs, output settings, webhooks, secrets, fonts, clean room
-  setup, or debugging failed renders. Also use it when a user is writing code that calls the Nexrender
-  API, troubleshooting a render error, or designing a video automation workflow with Nexrender. If the
-  conversation touches Nexrender at all - even incidentally - load this skill.
+  management, batch rendering, nested/join jobs, retrieving render logs, output settings, webhooks,
+  secrets, fonts, clean room setup, or debugging failed renders. Also use it when a user is writing code
+  that calls the Nexrender API, troubleshooting a render error, or designing a video automation workflow
+  with Nexrender. If the conversation touches Nexrender at all - even incidentally - load this skill.
 ---
 
 # Nexrender Cloud API Skill
@@ -62,6 +62,7 @@ polling stay consistent:
 | Upload template | `scripts/upload-template.ps1` | `scripts/upload-template.sh` |
 | Create preview job | `scripts/create-preview-job.ps1` | `scripts/create-preview-job.sh` |
 | Poll job | `scripts/poll-job.ps1` | `scripts/poll-job.sh` |
+| Get job render logs | `scripts/get-job-logs.ps1` | `scripts/get-job-logs.sh` |
 
 Use raw `curl` only for endpoints not covered by these scripts. The Bash variants use Bash + curl and
 Python's standard JSON library; they do not require `jq`.
@@ -113,8 +114,9 @@ Load these when the user needs more than the basics above:
   or asking about functions and when to use each one.
 
 - **`references/api-reference.md`** - Full endpoint list, request/response shapes, query params,
-  including v3 template listing/metadata/composition/layer endpoints.
-  Read when: listing jobs, filtering, template management endpoints, fonts/secrets endpoints.
+  including job render logs and v3 template listing/metadata/composition/layer endpoints.
+  Read when: listing jobs, retrieving render logs, filtering, template management endpoints,
+  fonts/secrets endpoints.
 
 - **`references/job-payload.md`** - Complete job payload schema with every asset type fully documented.
   Read when: constructing any job payload, choosing asset types, using `data` vs `text`, injecting
