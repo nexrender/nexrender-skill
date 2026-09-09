@@ -2,6 +2,18 @@
 
 Expert Nexrender Cloud API guidance for AI coding agents.
 
+## Recommended for new installations
+
+New users should install the [Nexrender CLI](https://github.com/nexrender/nexrender-cli). The `nexrender` binary includes this agent skill, installs managed copies for supported coding agents, and provides structured commands for jobs, templates, batches, fonts, secrets, and diagnosis.
+
+After installing the CLI, run:
+
+```bash
+nexrender setup
+```
+
+The standalone skill installation documented below remains supported for agents or environments that cannot run the CLI.
+
 This skill teaches Claude Code, Codex, OpenCode, Cursor, Gemini CLI, GitHub
 Copilot, and other agent tools how to work with Nexrender Cloud without
 guessing. It covers render jobs, job payloads, template upload and
@@ -53,7 +65,7 @@ NEXRENDER_API_KEY=...
 Do not commit `.env` or print API token values in logs, tickets, prompts, or
 chat transcripts.
 
-## Quick Install
+## Standalone skill install
 
 Recommended cross-agent install:
 
