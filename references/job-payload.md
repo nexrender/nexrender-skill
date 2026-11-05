@@ -217,13 +217,27 @@ video_h264_vbr_15mbps  video_h264_cbr_15mbps
 video_h264_vbr_40mbps  video_h264_cbr_40mbps
 video_prores_422
 video_prores_4444       (with alpha channel)
+video_vp8               (WebM, 1 Mbps)
+video_vp9               (WebM, 1 Mbps)
+video_vp8_alpha         (WebM with alpha channel)
+video_vp9_alpha         (WebM with alpha channel)
 ```
 
 **Image** (requires `type: "image"`):
 ```
 image_png    (lossless, supports transparency)
 image_jpeg   (lossy, smaller files)
+image_gif    (animated GIF from a frame range, 480 px wide, 12 fps)
 ```
+
+After Effects can't write WebM or GIF, so these render to a source format first (H.264, ProRes 4444
+for the `_alpha` codecs, PNG frames for GIF) and the render node converts the result with ffmpeg.
+The output URL ends in `.webm` or `.gif`. A GIF needs `frames` as a range, e.g. `[0, 90]`, and
+uploads one `.gif` file rather than a ZIP of frames.
+
+Nested jobs (`type: "job"` assets) can't use `image_gif` (an image child must be one PNG or JPEG
+frame) or the `_alpha` WebM codecs (the parent converts WebM to H.264, which drops alpha; use
+`video_prores_4444`).
 
 ---
 
