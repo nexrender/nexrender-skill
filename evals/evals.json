@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "I need to submit a render job to Nexrender. My template ID is 01JTGM9GCR71JV7EJYDF45QAFD and the composition is called 'main'. I want to replace a text layer called 'headline' with 'Summer Sale 2026', swap the image layer 'hero' with a URL (https://cdn.example.com/hero.jpg), hide a layer called 'CtaButton', and output the result as a ProRes 4444 video at full quality. Also push the output to my Cloudflare R2 bucket - my account ID is abc123, bucket name is 'video-outputs'. Credentials are already stored as secrets R2_KEY and R2_SECRET. Show me the complete curl request.",
-      "expected_output": "A complete, correct curl POST /jobs request with: text asset for headline, image asset for hero, function asset (nx-layer-state-set) to hide CtaButton, settings with codec video_prores_4444 and quality full, upload block with correct R2 endpoint using ${secrets.R2_KEY} and ${secrets.R2_SECRET} syntax."
+      "expected_output": "A complete, correct curl POST /jobs request with: text asset for headline, image asset for hero, function asset (nx:layer-state-set with params.layerName CtaButton and params.visible false) to hide CtaButton, settings with codec video_prores_4444 and quality full, upload block with correct R2 endpoint using ${secrets.R2_KEY} and ${secrets.R2_SECRET} syntax."
     },
     {
       "id": 2,
@@ -34,7 +34,7 @@
     {
       "id": 7,
       "prompt": "I need to list our templates and inspect the compositions and layers for one template. Which Nexrender endpoints should I use now, and how do layer names map into job payloads?",
-      "expected_output": "Uses GET /v3/templates for lightweight template metadata instead of deprecated GET /templates. Uses GET /v3/templates/{id}/compositions and GET /v3/templates/{id}/layers for parsed structure with pagination parameters limit and offset. Explains that composition name maps to template.composition, v3 layer name maps to job asset/function layerName, and v3 layers can include layer_type/source_type/timing/bounds metadata."
+      "expected_output": "Uses GET /v3/templates for lightweight template metadata instead of deprecated GET /templates. Uses GET /v3/templates/{id}/compositions and GET /v3/templates/{id}/layers for parsed structure with pagination parameters limit and offset. Explains that composition name maps to template.composition, v3 layer name maps to job asset layerName or function params.layerName, and v3 layers can include layer_type/source_type/timing/bounds metadata."
     },
     {
       "id": 8,

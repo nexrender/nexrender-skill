@@ -261,7 +261,7 @@ Multiple nested job assets render in parallel - the parent waits for all of them
 
 ## Functions — scripted layer manipulation
 
-Functions are built-in helpers that run as ExtendScript inside After Effects before rendering. Add them to the `assets` array as `type: "function"`.
+Functions are built-in helpers that run as ExtendScript inside After Effects before rendering. The exception is `nx:genai`, which runs as a separate child job before the render. Add them to the `assets` array as `type: "function"`, with every option, including `layerName`, inside `params`. See `job-payload.md` for the full parameter list.
 
 ### When to use functions vs. plain assets
 
@@ -269,31 +269,31 @@ Functions are built-in helpers that run as ExtendScript inside After Effects bef
 |------|-----|
 | Replace text content | `type: "text"` or `type: "data"` |
 | Replace image/video source | `type: "image"` / `type: "video"` |
-| Change text font, size, color, tracking | `type: "function"` → `nx-text-params-set` |
-| Change a solid layer's fill color | `type: "function"` → `nx-solid-color-set` |
-| Show or hide a layer | `type: "function"` → `nx-layer-state-set` |
-| Remove a layer entirely | `type: "function"` → `nx-layer-remove` |
-| Shrink font to fit a text box | `type: "function"` → `nx-layer-autoscale` |
-| Shift a layer's start time | `type: "function"` → `nx-layer-start-set` |
-| Change a layer's duration | `type: "function"` → `nx-layer-duration-set` |
-| Change a composition's duration | `type: "function"` → `nx-comp-duration-set` |
-| Generate an AI image and inject it | `type: "function"` → `nx-gen-ai` |
+| Change text font, size, color, tracking | `type: "function"` → `nx:text-params-set` |
+| Change a solid layer's fill color | `type: "function"` → `nx:solid-color-set` |
+| Show or hide a layer | `type: "function"` → `nx:layer-state-set` |
+| Remove a layer entirely (by index) | `type: "function"` → `nx:layer-remove` |
+| Scale a layer to fill or fit its composition | `type: "function"` → `nx:layer-autoscale` |
+| Shift a layer's start time | `type: "function"` → `nx:layer-start-set` |
+| Change a layer's duration | `type: "function"` → `nx:layer-duration-set` |
+| Change a composition's render length (work area) | `type: "function"` → `nx:comp-duration-set` |
+| Generate an AI video, image, or audio file and place it in a layer | `type: "function"` → `nx:genai` |
 
 ### Examples
 
 **Hide or show a layer:**
 ```json
-{ "type": "function", "name": "nx-layer-state-set", "layerName": "PromoTag", "params": { "state": "hidden" } }
-{ "type": "function", "name": "nx-layer-state-set", "layerName": "PromoTag", "params": { "state": "visible" } }
+{ "type": "function", "name": "nx:layer-state-set", "params": { "layerName": "PromoTag", "visible": false } }
+{ "type": "function", "name": "nx:layer-state-set", "params": { "layerName": "PromoTag", "visible": true } }
 ```
 
 **Set text style (font, size, color, tracking):**
 ```json
 {
   "type": "function",
-  "name": "nx-text-params-set",
-  "layerName": "headline",
+  "name": "nx:text-params-set",
   "params": {
+    "layerName": "headline",
     "fontSize": 72,
     "fillColor": [1.0, 0.5, 0.0],
     "tracking": 50,
@@ -306,35 +306,38 @@ Functions are built-in helpers that run as ExtendScript inside After Effects bef
 ```json
 {
   "type": "function",
-  "name": "nx-solid-color-set",
-  "layerName": "BackgroundSolid",
-  "params": { "color": [0.1, 0.4, 0.9] }
+  "name": "nx:solid-color-set",
+  "params": { "layerName": "BackgroundSolid", "color": [0.1, 0.4, 0.9] }
 }
 ```
 
-**Generate an AI image and inject it as a layer source:**
+**Generate an AI image and place it in a layer:**
 ```json
 {
   "type": "function",
-  "name": "nx-gen-ai",
-  "layerName": "hero-image",
+  "name": "nx:genai",
   "params": {
-    "provider": "openai",
-    "model": "gpt-image-1",
-    "prompt": "A minimalist product shot on white background",
-    "apiKey": "${secrets.OPENAI_API_KEY}"
+    "provider": "fal",
+    "key": "${secrets.FAL_KEY}",
+    "model": "fal-ai/flux/schnell",
+    "type": "image",
+    "layerName": "hero-image",
+    "data": { "prompt": "A minimalist product shot on white background" }
   }
 }
 ```
 
-**Auto-shrink text to fit bounds:**
+`provider` must be `fal`. `data` is passed to the model as is. For a generated video, Nexrender does not measure the clip: ask the model for a length in `data`, then set the same `value` (seconds) with `nx:layer-duration-set` and/or `nx:comp-duration-set`.
+
+**Scale a layer to fill its composition:**
 ```json
 {
   "type": "function",
-  "name": "nx-layer-autoscale",
-  "layerName": "description",
-  "params": { "maxFontSize": 48, "minFontSize": 12 }
+  "name": "nx:layer-autoscale",
+  "params": { "layerName": "BackgroundImage", "type": "fill" }
 }
 ```
+
+`nx:layer-autoscale` scales the layer, not the font size. Use `fit` to keep the whole layer inside the composition.
 
 Functions and regular asset types can coexist freely in the same `assets` array.

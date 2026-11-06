@@ -135,25 +135,32 @@ Executes a custom ExtendScript against the project before rendering.
 ### `type: "function"` - run a built-in Nexrender function
 Calls a Nexrender built-in helper. Available functions:
 
-| Function | Purpose |
-|----------|---------|
-| `nx-text-params-set` | Set text font, size, tracking, leading, fill color |
-| `nx-solid-color-set` | Change a solid layer's color |
-| `nx-layer-state-set` | Show or hide a layer |
-| `nx-layer-remove` | Remove a layer entirely |
-| `nx-layer-autoscale` | Shrink font size to fit within bounds |
-| `nx-layer-start-set` | Shift layer in point in time |
-| `nx-layer-duration-set` | Change layer duration |
-| `nx-comp-duration-set` | Change composition duration |
-| `nx-gen-ai` | Generate an image via AI and inject it as a layer source |
+| Function | Purpose | `params` (required in bold) |
+|----------|---------|-----------------------------|
+| `nx:text-params-set` | Set text content, font, size, colors, stroke, tracking, justification, position, and transform expressions | **`layerName`**, `textValue`, `textExpression`, `font` (PostScript name), `fontSize`, `fillColor`, `strokeColor`, `strokeWidth`, `strokeOverFill`, `applyStroke`, `applyFill`, `justification` (`left`/`center`/`right`), `tracking`, `positionValue` (`[x, y]`), `positionExpression`, `scaleExpression`, `opacityExpression` |
+| `nx:solid-color-set` | Change a solid layer's color | **`layerName`**, **`color`** (hex string or 3-number RGB array), `composition` |
+| `nx:layer-state-set` | Turn a layer on or off | **`layerName`**, **`visible`** (boolean) |
+| `nx:layer-remove` | Remove a layer by its index | **`composition`**, **`layerIndex`** (1 = top layer) |
+| `nx:layer-autoscale` | Scale a layer to fill or fit its composition | **`layerName`**, `composition`, `type` (`fill`/`fit`, default `fill`) |
+| `nx:layer-start-set` | Set a layer's start time | **`layerName`**, **`value`** (seconds) |
+| `nx:layer-duration-set` | Set a layer's duration | **`layerName`**, **`value`** (seconds) |
+| `nx:comp-duration-set` | Set a composition's work area to start at 0 and last `value` seconds | **`composition`**, **`value`** (seconds) |
+| `nx:genai` | Generate a video, image, or audio file with an AI provider and place it in a footage layer | **`provider`** (`fal`), **`key`**, **`model`**, **`type`** (`video`/`image`/`audio`), **`layerName`**, **`data`** (object passed to the model) |
+
+Rules the API enforces:
+- Function names use a colon: `nx:layer-state-set`, not `nx-layer-state-set`.
+- Every option, including `layerName`, goes inside `params`. Top-level fields such as `layerName` or `src` on a function asset are rejected.
+- Unknown params, missing required params, and wrong types are rejected with a 400 error.
+- `layerName` may be an array of names for every function above except `nx:layer-remove`, `nx:comp-duration-set`, and `nx:genai`.
+- Functions without a `composition` param change matching layers in every composition.
+- `nx:text-params-set` skips values of `0`, `false`, or `""`, so `applyFill: false` does not turn the fill off.
 
 Example - hide a layer:
 ```json
 {
   "type": "function",
-  "name": "nx-layer-state-set",
-  "layerName": "CtaButton",
-  "params": { "state": "hidden" }
+  "name": "nx:layer-state-set",
+  "params": { "layerName": "CtaButton", "visible": false }
 }
 ```
 
@@ -161,9 +168,9 @@ Example - set text style:
 ```json
 {
   "type": "function",
-  "name": "nx-text-params-set",
-  "layerName": "headline",
+  "name": "nx:text-params-set",
   "params": {
+    "layerName": "headline",
     "fontSize": 72,
     "fillColor": [1, 0.5, 0],
     "tracking": 50
@@ -175,16 +182,19 @@ Example - AI image generation:
 ```json
 {
   "type": "function",
-  "name": "nx-gen-ai",
-  "layerName": "hero-image",
+  "name": "nx:genai",
   "params": {
-    "provider": "openai",
-    "model": "gpt-image-1",
-    "prompt": "A serene mountain lake at sunset",
-    "apiKey": "${secrets.OPENAI_API_KEY}"
+    "provider": "fal",
+    "key": "${secrets.FAL_KEY}",
+    "model": "fal-ai/flux/schnell",
+    "type": "image",
+    "layerName": "hero-image",
+    "data": { "prompt": "A serene mountain lake at sunset" }
   }
 }
 ```
+
+`nx:genai` runs as a separate child job before the render. The create response has status `pending` and a `children` entry with `"function": "nx:genai"`. The generation job is not retried; if it fails, the render job fails. Nexrender does not measure a generated video. To control its length, ask the model for a length in `data`, then set the same length with `nx:layer-duration-set` and/or `nx:comp-duration-set` (`value` in seconds).
 
 ### `type: "job"` - nested child job
 Renders a child composition first, injects the output as a layer in the parent. See `workflows.md`.

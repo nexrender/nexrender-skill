@@ -171,7 +171,7 @@ List paginated After Effects layers discovered during template processing.
 ]
 ```
 
-Use `name` as the render job asset/function `layerName`. Match `composition_id` to the composition
+Use `name` as the render job asset `layerName`, or as a function's `params.layerName`. Match `composition_id` to the composition
 `aeid` when you need to identify which composition owns the layer. `layer_type`, `source_type`,
 timing, bounds, and `data` are parser metadata; keep job payload targeting based on exact names.
 
