@@ -103,6 +103,20 @@ How it works:
 
 Multiple nested jobs are supported - they render in parallel, and the parent waits for all of them.
 
+A child can have nested job assets of its own (a job tree). Each job waits for its own children; the
+creation response nests each child's `children` inside it, and a child waiting on children of its
+own starts as `pending`. Every `nx:genai` function is a child job too (`"function": "nx:genai"`, no
+`outputUrl`).
+
+Limits (the request is refused with `400`, and nothing is created):
+- At most 4 levels of child jobs below the submitted job: `errorCode` `NESTED_JOB_ASSETS`.
+- At most 50 jobs per tree, counting the submitted job and every `nx:genai`: `errorCode` `JOB_TREE_TOO_LARGE`.
+
+When a child job has no retries left (`nx:genai` jobs are never retried), every job above it fails
+with `One of the child jobs failed after N attempts.`, the tree's jobs that have not started are
+cancelled, and the submitted job sends its webhook. Child jobs have no webhook of their own. Cancel
+the submitted job to stop a whole tree.
+
 ---
 
 ## 4. Join Jobs (stitching/concatenation)

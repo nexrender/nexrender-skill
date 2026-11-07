@@ -86,7 +86,7 @@ Prefer the online docs over any stale local documentation dump. Keep durable les
 | Status | Meaning |
 |--------|---------|
 | `queued` | Waiting for a render worker |
-| `pending` | Parent job waiting for child jobs (nested/join only) |
+| `pending` | Job waiting for its child jobs (nested job assets, `nx:genai` functions, join jobs) |
 | `render:dorender` | Actively rendering |
 | `finished` | Done - `outputUrl` is populated |
 | `error` | Failed - check `stats.error` for the message |
